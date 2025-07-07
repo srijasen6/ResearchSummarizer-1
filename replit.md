@@ -85,8 +85,28 @@ The AI Research Assistant is a Flask-based web application that provides intelli
 - Connection pooling and database optimization
 
 ## Changelog
-- July 07, 2025. Initial setup
+- July 07, 2025: Initial setup with complete Flask application
+- July 07, 2025: Successfully implemented CPU-friendly fallback systems for AI functionality
+- July 07, 2025: Created comprehensive VSCode setup guides for beginners
+- July 07, 2025: Added complete Postman collection for API testing
+
+## Recent Implementation Notes
+
+### CPU-Friendly Architecture
+- Implemented graceful fallback for missing AI dependencies (sentence-transformers, llama-cpp-python, faiss)
+- Created keyword-based search as alternative to semantic search
+- Added extractive summarization using basic text processing
+- Application runs successfully on laptops without GPU/CUDA support
+
+### VSCode Integration
+- Created detailed setup guide for VSCode development environment
+- Provided terminal commands for Windows, macOS, and Linux
+- Added troubleshooting section for common dependency issues
+- Ensured minimal dependencies for basic functionality
 
 ## User Preferences
 
-Preferred communication style: Simple, everyday language.
+- Preferred communication style: Simple, everyday language
+- Development environment: VSCode with integrated terminal
+- Target deployment: Local laptop without GPU requirements
+- Documentation style: Step-by-step terminal commands and screenshots

@@ -33,14 +33,29 @@ A Flask-based AI research assistant that provides comprehensive document analysi
 - **Quantized Llama**: GGUF format for CPU inference
 - **Sentence Transformers**: Lightweight embeddings model
 
-## Installation & Setup
+## Quick Start
 
 ### Prerequisites
-- Python 3.8 or higher
+- Python 3.11 or higher
 - 4GB+ RAM (8GB+ recommended)
-- 2GB+ storage space for models
+- 2GB+ storage space
 
-### Step 1: Clone the Repository
+### Installation
 ```bash
-git clone <repository-url>
-cd ai-research-assistant
+# 1. Download and open the project in VSCode
+# 2. Open terminal in VSCode (Ctrl+`)
+
+# 3. Install dependencies
+pip install flask flask-sqlalchemy gunicorn PyPDF2 numpy psycopg2-binary email-validator werkzeug sqlalchemy
+
+# 4. Create required folders
+mkdir uploads models_cache
+
+# 5. Run the application
+python main.py
+
+# 6. Open browser to http://localhost:5000
+```
+
+### Detailed Setup
+See [setup_guide.md](setup_guide.md) for complete step-by-step instructions.
