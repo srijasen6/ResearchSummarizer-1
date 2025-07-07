@@ -1,0 +1,547 @@
+{
+  "info": {
+    "name": "AI Research Assistant API",
+    "description": "Complete API collection for testing the AI Research Assistant functionality",
+    "version": "1.0.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Document Management",
+      "item": [
+        {
+          "name": "Upload Document",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "sample.pdf",
+                  "description": "PDF or TXT file to upload (max 16MB)"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/upload",
+              "host": ["{{base_url}}"],
+              "path": ["upload"]
+            },
+            "description": "Upload a document (PDF or TXT) for analysis"
+          },
+          "response": [
+            {
+              "name": "Successful Upload",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "file",
+                      "type": "file",
+                      "src": "sample.pdf"
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{base_url}}/upload",
+                  "host": ["{{base_url}}"],
+                  "path": ["upload"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"document_id\": 1,\n  \"session_id\": \"uuid-string\",\n  \"summary\": \"Document summary here...\",\n  \"filename\": \"sample.pdf\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get All Documents",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/documents",
+              "host": ["{{base_url}}"],
+              "path": ["api", "documents"]
+            },
+            "description": "Retrieve list of all uploaded documents"
+          },
+          "response": [
+            {
+              "name": "Documents List",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/documents",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "documents"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "[\n  {\n    \"id\": 1,\n    \"filename\": \"sample.pdf\",\n    \"upload_date\": \"2024-01-01T12:00:00\",\n    \"processed\": true,\n    \"summary\": \"Document summary...\"\n  }\n]"
+            }
+          ]
+        },
+        {
+          "name": "Get Document History",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/document/{{document_id}}/history",
+              "host": ["{{base_url}}"],
+              "path": ["api", "document", "{{document_id}}", "history"]
+            },
+            "description": "Get question and answer history for a specific document"
+          },
+          "response": [
+            {
+              "name": "Document History",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/document/1/history",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "document", "1", "history"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "[\n  {\n    \"id\": 1,\n    \"question\": \"What is the main topic?\",\n    \"answer\": \"The main topic is...\",\n    \"justification\": \"This is supported by...\",\n    \"source_reference\": \"Section 1, paragraph 2\",\n    \"type\": \"user\",\n    \"created_date\": \"2024-01-01T12:00:00\"\n  }\n]"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Question & Answer",
+      "item": [
+        {
+          "name": "Ask Free-form Question",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"question\": \"What is the main conclusion of this document?\",\n  \"document_id\": {{document_id}}\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/ask",
+              "host": ["{{base_url}}"],
+              "path": ["ask"]
+            },
+            "description": "Ask a free-form question about the document"
+          },
+          "response": [
+            {
+              "name": "Question Answer",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"question\": \"What is the main conclusion?\",\n  \"document_id\": 1\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/ask",
+                  "host": ["{{base_url}}"],
+                  "path": ["ask"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"answer\": \"The main conclusion is that...\",\n  \"justification\": \"This conclusion is supported by the evidence presented in section 3...\",\n  \"source_reference\": \"This information is found in the conclusion section of the document\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Generate Challenge Questions",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"document_id\": {{document_id}}\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/challenge",
+              "host": ["{{base_url}}"],
+              "path": ["challenge"]
+            },
+            "description": "Generate AI-powered challenge questions for the document"
+          },
+          "response": [
+            {
+              "name": "Challenge Questions",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"document_id\": 1\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/challenge",
+                  "host": ["{{base_url}}"],
+                  "path": ["challenge"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"questions\": [\n    {\n      \"id\": 1,\n      \"question\": \"What methodology was used in this research?\"\n    },\n    {\n      \"id\": 2,\n      \"question\": \"What are the key limitations mentioned?\"\n    },\n    {\n      \"id\": 3,\n      \"question\": \"How do the results compare to previous studies?\"\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Evaluate Challenge Answer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"question_id\": {{question_id}},\n  \"answer\": \"The methodology used was a quantitative analysis of survey data from 1000 participants.\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/evaluate",
+              "host": ["{{base_url}}"],
+              "path": ["evaluate"]
+            },
+            "description": "Evaluate user's answer to a challenge question"
+          },
+          "response": [
+            {
+              "name": "Answer Evaluation",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"question_id\": 1,\n  \"answer\": \"The methodology used was quantitative analysis.\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/evaluate",
+                  "host": ["{{base_url}}"],
+                  "path": ["evaluate"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"evaluation\": {\n    \"score\": 85,\n    \"feedback\": \"Your answer correctly identifies the quantitative approach but misses some specific details about the sample size and data collection method.\",\n    \"is_correct\": true\n  },\n  \"correct_answer\": \"The methodology used was a mixed-methods approach combining quantitative surveys with qualitative interviews.\",\n  \"justification\": \"This is stated clearly in the methodology section of the document.\",\n  \"source_reference\": \"Section 2: Methodology, paragraph 1\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Web Pages",
+      "item": [
+        {
+          "name": "Home Page",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/",
+              "host": ["{{base_url}}"],
+              "path": [""]
+            },
+            "description": "Main application home page"
+          }
+        },
+        {
+          "name": "Document Analysis Page",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/document/{{document_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["document", "{{document_id}}"]
+            },
+            "description": "Document analysis and interaction page"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Error Handling Tests",
+      "item": [
+        {
+          "name": "Upload Invalid File Type",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "invalid.docx",
+                  "description": "Invalid file type to test error handling"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/upload",
+              "host": ["{{base_url}}"],
+              "path": ["upload"]
+            },
+            "description": "Test error handling for invalid file types"
+          },
+          "response": [
+            {
+              "name": "File Type Error",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "file",
+                      "type": "file",
+                      "src": "invalid.docx"
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{base_url}}/upload",
+                  "host": ["{{base_url}}"],
+                  "path": ["upload"]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"File type not allowed. Please upload PDF or TXT files.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Ask Question Without Document",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"question\": \"What is this about?\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/ask",
+              "host": ["{{base_url}}"],
+              "path": ["ask"]
+            },
+            "description": "Test error handling when no document is selected"
+          },
+          "response": [
+            {
+              "name": "No Document Error",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"question\": \"What is this about?\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/ask",
+                  "host": ["{{base_url}}"],
+                  "path": ["ask"]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"No document selected\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Invalid Document ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/document/999/history",
+              "host": ["{{base_url}}"],
+              "path": ["api", "document", "999", "history"]
+            },
+            "description": "Test error handling for non-existent document ID"
+          },
+          "response": [
+            {
+              "name": "Document Not Found",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/document/999/history",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "document", "999", "history"]
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"Document not found\"\n}"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:5000",
+      "description": "Base URL for the AI Research Assistant API"
+    },
+    {
+      "key": "document_id",
+      "value": "1",
+      "description": "ID of the uploaded document"
+    },
+    {
+      "key": "question_id",
+      "value": "1",
+      "description": "ID of the challenge question"
+    }
+  ],
+  "auth": {
+    "type": "noauth"
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Pre-request script to log request details",
+          "console.log('Making request to:', pm.request.url);",
+          "console.log('Request method:', pm.request.method);"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Common test script for all requests",
+          "pm.test('Status code is successful', function () {",
+          "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+          "});",
+          "",
+          "pm.test('Response time is less than 10 seconds', function () {",
+          "    pm.expect(pm.response.responseTime).to.be.below(10000);",
+          "});",
+          "",
+          "pm.test('Content-Type is present', function () {",
+          "    pm.expect(pm.response.headers.get('Content-Type')).to.exist;",
+          "});"
+        ]
+      }
+    }
+  ]
+}

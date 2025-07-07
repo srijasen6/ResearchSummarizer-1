@@ -1,0 +1,303 @@
+{% extends "base.html" %}
+
+{% block title %}AI Research Assistant - Home{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="text-center mb-5">
+            <h1 class="display-4 mb-3">
+                <i class="fas fa-brain text-primary me-3"></i>
+                AI Research Assistant
+            </h1>
+            <p class="lead text-muted">
+                Upload your documents and get intelligent analysis, summaries, and Q&A assistance
+            </p>
+        </div>
+
+        <!-- Document Upload Section -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-upload me-2"></i>
+                    Upload Document
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="upload-zone" id="uploadZone">
+                    <div class="upload-content">
+                        <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-3"></i>
+                        <h6>Drag & Drop your document here</h6>
+                        <p class="text-muted">or click to browse</p>
+                        <p class="small text-muted">Supported formats: PDF, TXT (Max 16MB)</p>
+                    </div>
+                    <input type="file" id="fileInput" accept=".pdf,.txt" style="display: none;">
+                </div>
+                
+                <div class="upload-progress mt-3" id="uploadProgress" style="display: none;">
+                    <div class="progress">
+                        <div class="progress-bar" id="progressBar" role="progressbar" style="width: 0%"></div>
+                    </div>
+                    <div class="text-center mt-2" id="uploadStatus">Uploading...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Documents -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-history me-2"></i>
+                    Recent Documents
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="recentDocuments">
+                    <div class="text-center text-muted">
+                        <i class="fas fa-file-alt fa-2x mb-2"></i>
+                        <p>No documents uploaded yet</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Features Section -->
+        <div class="row mt-5">
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-magic fa-2x text-primary mb-3"></i>
+                        <h6>Auto Summary</h6>
+                        <p class="text-muted small">Get instant summaries of your documents in 150 words or less</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-question-circle fa-2x text-info mb-3"></i>
+                        <h6>Ask Anything</h6>
+                        <p class="text-muted small">Ask free-form questions and get contextual answers</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-brain fa-2x text-success mb-3"></i>
+                        <h6>Challenge Mode</h6>
+                        <p class="text-muted small">Test your understanding with AI-generated questions</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Documents Modal -->
+<div class="modal fade" id="documentsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-file-alt me-2"></i>
+                    Your Documents
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="documentsModalContent">
+                    <div class="text-center">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Initialize page
+document.addEventListener('DOMContentLoaded', function() {
+    loadRecentDocuments();
+    setupFileUpload();
+});
+
+// Setup file upload functionality
+function setupFileUpload() {
+    const uploadZone = document.getElementById('uploadZone');
+    const fileInput = document.getElementById('fileInput');
+    
+    // Click to upload
+    uploadZone.addEventListener('click', () => fileInput.click());
+    
+    // Drag and drop
+    uploadZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadZone.classList.add('drag-over');
+    });
+    
+    uploadZone.addEventListener('dragleave', () => {
+        uploadZone.classList.remove('drag-over');
+    });
+    
+    uploadZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadZone.classList.remove('drag-over');
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            handleFileUpload(files[0]);
+        }
+    });
+    
+    // File input change
+    fileInput.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) {
+            handleFileUpload(e.target.files[0]);
+        }
+    });
+}
+
+// Handle file upload
+function handleFileUpload(file) {
+    if (!file) return;
+    
+    // Validate file type
+    const allowedTypes = ['application/pdf', 'text/plain'];
+    if (!allowedTypes.includes(file.type)) {
+        showToast('Please upload a PDF or TXT file', 'error');
+        return;
+    }
+    
+    // Validate file size (16MB)
+    if (file.size > 16 * 1024 * 1024) {
+        showToast('File size must be less than 16MB', 'error');
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    const progressContainer = document.getElementById('uploadProgress');
+    const progressBar = document.getElementById('progressBar');
+    const uploadStatus = document.getElementById('uploadStatus');
+    
+    // Show progress
+    progressContainer.style.display = 'block';
+    progressBar.style.width = '0%';
+    uploadStatus.textContent = 'Uploading...';
+    
+    fetch('/upload', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            progressBar.style.width = '100%';
+            uploadStatus.textContent = 'Upload complete!';
+            
+            setTimeout(() => {
+                window.location.href = `/document/${data.document_id}`;
+            }, 1000);
+        } else {
+            throw new Error(data.error || 'Upload failed');
+        }
+    })
+    .catch(error => {
+        progressContainer.style.display = 'none';
+        showToast(error.message, 'error');
+    });
+}
+
+// Load recent documents
+function loadRecentDocuments() {
+    fetch('/api/documents')
+        .then(response => response.json())
+        .then(documents => {
+            const container = document.getElementById('recentDocuments');
+            
+            if (documents.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center text-muted">
+                        <i class="fas fa-file-alt fa-2x mb-2"></i>
+                        <p>No documents uploaded yet</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = documents.map(doc => `
+                <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                    <div>
+                        <h6 class="mb-1">${doc.filename}</h6>
+                        <small class="text-muted">
+                            Uploaded: ${new Date(doc.upload_date).toLocaleDateString()}
+                            ${doc.processed ? '<span class="badge bg-success ms-2">Processed</span>' : '<span class="badge bg-warning ms-2">Processing</span>'}
+                        </small>
+                    </div>
+                    <a href="/document/${doc.id}" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-eye me-1"></i>View
+                    </a>
+                </div>
+            `).join('');
+        })
+        .catch(error => {
+            console.error('Error loading documents:', error);
+        });
+}
+
+// Show documents modal
+function showDocuments() {
+    const modal = new bootstrap.Modal(document.getElementById('documentsModal'));
+    modal.show();
+    
+    // Load documents in modal
+    fetch('/api/documents')
+        .then(response => response.json())
+        .then(documents => {
+            const container = document.getElementById('documentsModalContent');
+            
+            if (documents.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center text-muted">
+                        <i class="fas fa-file-alt fa-2x mb-2"></i>
+                        <p>No documents uploaded yet</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = documents.map(doc => `
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="card-title">${doc.filename}</h6>
+                                <p class="card-text text-muted small">${doc.summary || 'No summary available'}</p>
+                                <small class="text-muted">
+                                    Uploaded: ${new Date(doc.upload_date).toLocaleDateString()}
+                                </small>
+                            </div>
+                            <div>
+                                ${doc.processed ? '<span class="badge bg-success">Processed</span>' : '<span class="badge bg-warning">Processing</span>'}
+                                <a href="/document/${doc.id}" class="btn btn-sm btn-primary ms-2">
+                                    <i class="fas fa-eye me-1"></i>View
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        })
+        .catch(error => {
+            console.error('Error loading documents:', error);
+        });
+}
+</script>
+{% endblock %}

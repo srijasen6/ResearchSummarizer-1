@@ -1,0 +1,474 @@
+{% extends "base.html" %}
+
+{% block title %}Document Analysis - {{ document.original_filename }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <!-- Document Header -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-file-alt me-2"></i>
+                        {{ document.original_filename }}
+                    </h5>
+                    <div>
+                        <span class="badge bg-success">Processed</span>
+                        <small class="text-muted ms-2">
+                            {{ document.upload_date.strftime('%Y-%m-%d %H:%M') }}
+                        </small>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <h6 class="text-muted mb-2">Summary</h6>
+                <p class="summary-text">{{ document.summary or 'No summary available' }}</p>
+            </div>
+        </div>
+
+        <!-- Mode Selection -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-cog me-2"></i>
+                    Interaction Mode
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <div class="card mode-card" onclick="switchMode('ask')">
+                            <div class="card-body text-center">
+                                <i class="fas fa-question-circle fa-2x text-info mb-2"></i>
+                                <h6>Ask Anything</h6>
+                                <p class="small text-muted">Ask free-form questions about the document</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="card mode-card" onclick="switchMode('challenge')">
+                            <div class="card-body text-center">
+                                <i class="fas fa-brain fa-2x text-success mb-2"></i>
+                                <h6>Challenge Me</h6>
+                                <p class="small text-muted">Test your understanding with AI questions</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ask Mode -->
+        <div class="card mb-4" id="askMode" style="display: none;">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-question-circle me-2"></i>
+                    Ask Anything
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <textarea 
+                        class="form-control" 
+                        id="questionInput" 
+                        rows="3" 
+                        placeholder="Ask any question about the document..."
+                    ></textarea>
+                </div>
+                <button class="btn btn-primary" onclick="askQuestion()">
+                    <i class="fas fa-paper-plane me-2"></i>Ask Question
+                </button>
+            </div>
+        </div>
+
+        <!-- Challenge Mode -->
+        <div class="card mb-4" id="challengeMode" style="display: none;">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-brain me-2"></i>
+                    Challenge Me
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="challengeContent">
+                    <div class="text-center">
+                        <p class="text-muted">Click the button below to generate challenge questions</p>
+                        <button class="btn btn-success" onclick="generateChallenge()">
+                            <i class="fas fa-lightbulb me-2"></i>Generate Questions
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div class="card" id="resultsSection" style="display: none;">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-reply me-2"></i>
+                    Response
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="resultsContent"></div>
+            </div>
+        </div>
+
+        <!-- History Section -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-history me-2"></i>
+                    Question History
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="historyContent">
+                    <div class="text-center text-muted">
+                        <i class="fas fa-clock fa-2x mb-2"></i>
+                        <p>No questions asked yet</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Challenge Question Modal -->
+<div class="modal fade" id="challengeQuestionModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-question-circle me-2"></i>
+                    Challenge Question
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="challengeQuestionContent"></div>
+                <div class="mt-3">
+                    <textarea 
+                        class="form-control" 
+                        id="challengeAnswerInput" 
+                        rows="3" 
+                        placeholder="Enter your answer..."
+                    ></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Skip</button>
+                <button type="button" class="btn btn-primary" onclick="submitChallengeAnswer()">
+                    Submit Answer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const documentId = {{ document.id }};
+let currentMode = null;
+let challengeQuestions = [];
+let currentChallengeIndex = 0;
+
+// Initialize page
+document.addEventListener('DOMContentLoaded', function() {
+    loadQuestionHistory();
+});
+
+// Switch interaction mode
+function switchMode(mode) {
+    currentMode = mode;
+    
+    // Hide all modes
+    document.getElementById('askMode').style.display = 'none';
+    document.getElementById('challengeMode').style.display = 'none';
+    document.getElementById('resultsSection').style.display = 'none';
+    
+    // Show selected mode
+    if (mode === 'ask') {
+        document.getElementById('askMode').style.display = 'block';
+    } else if (mode === 'challenge') {
+        document.getElementById('challengeMode').style.display = 'block';
+    }
+    
+    // Update mode card styling
+    document.querySelectorAll('.mode-card').forEach(card => {
+        card.classList.remove('border-primary', 'bg-light');
+    });
+    
+    if (mode === 'ask') {
+        document.querySelector('[onclick="switchMode(\'ask\')"]').classList.add('border-primary', 'bg-light');
+    } else if (mode === 'challenge') {
+        document.querySelector('[onclick="switchMode(\'challenge\')"]').classList.add('border-primary', 'bg-light');
+    }
+}
+
+// Ask question
+function askQuestion() {
+    const question = document.getElementById('questionInput').value.trim();
+    
+    if (!question) {
+        showToast('Please enter a question', 'error');
+        return;
+    }
+    
+    showLoading();
+    
+    fetch('/ask', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            question: question,
+            document_id: documentId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideLoading();
+        
+        if (data.success) {
+            showResults({
+                type: 'answer',
+                question: question,
+                answer: data.answer,
+                justification: data.justification,
+                source_reference: data.source_reference
+            });
+            
+            // Clear input
+            document.getElementById('questionInput').value = '';
+            
+            // Reload history
+            loadQuestionHistory();
+        } else {
+            showToast(data.error || 'Failed to get answer', 'error');
+        }
+    })
+    .catch(error => {
+        hideLoading();
+        showToast('Error asking question: ' + error.message, 'error');
+    });
+}
+
+// Generate challenge questions
+function generateChallenge() {
+    showLoading();
+    
+    fetch('/challenge', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            document_id: documentId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideLoading();
+        
+        if (data.success) {
+            challengeQuestions = data.questions;
+            currentChallengeIndex = 0;
+            showChallengeQuestion();
+        } else {
+            showToast(data.error || 'Failed to generate questions', 'error');
+        }
+    })
+    .catch(error => {
+        hideLoading();
+        showToast('Error generating challenge: ' + error.message, 'error');
+    });
+}
+
+// Show challenge question modal
+function showChallengeQuestion() {
+    if (currentChallengeIndex >= challengeQuestions.length) {
+        showToast('Challenge completed!', 'success');
+        loadQuestionHistory();
+        return;
+    }
+    
+    const question = challengeQuestions[currentChallengeIndex];
+    
+    document.getElementById('challengeQuestionContent').innerHTML = `
+        <h6>Question ${currentChallengeIndex + 1} of ${challengeQuestions.length}</h6>
+        <p class="question-text">${question.question}</p>
+    `;
+    
+    document.getElementById('challengeAnswerInput').value = '';
+    
+    const modal = new bootstrap.Modal(document.getElementById('challengeQuestionModal'));
+    modal.show();
+}
+
+// Submit challenge answer
+function submitChallengeAnswer() {
+    const answer = document.getElementById('challengeAnswerInput').value.trim();
+    
+    if (!answer) {
+        showToast('Please enter an answer', 'error');
+        return;
+    }
+    
+    const questionId = challengeQuestions[currentChallengeIndex].id;
+    
+    showLoading();
+    
+    fetch('/evaluate', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            question_id: questionId,
+            answer: answer
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideLoading();
+        
+        if (data.success) {
+            // Close modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('challengeQuestionModal'));
+            modal.hide();
+            
+            // Show evaluation results
+            showResults({
+                type: 'evaluation',
+                question: challengeQuestions[currentChallengeIndex].question,
+                user_answer: answer,
+                evaluation: data.evaluation,
+                correct_answer: data.correct_answer,
+                justification: data.justification,
+                source_reference: data.source_reference
+            });
+            
+            // Move to next question
+            currentChallengeIndex++;
+            
+            // Show next question after a delay
+            setTimeout(() => {
+                showChallengeQuestion();
+            }, 3000);
+        } else {
+            showToast(data.error || 'Failed to evaluate answer', 'error');
+        }
+    })
+    .catch(error => {
+        hideLoading();
+        showToast('Error evaluating answer: ' + error.message, 'error');
+    });
+}
+
+// Show results
+function showResults(data) {
+    const resultsSection = document.getElementById('resultsSection');
+    const resultsContent = document.getElementById('resultsContent');
+    
+    if (data.type === 'answer') {
+        resultsContent.innerHTML = `
+            <div class="mb-3">
+                <h6 class="text-muted">Question:</h6>
+                <p class="question-text">${data.question}</p>
+            </div>
+            <div class="mb-3">
+                <h6 class="text-success">Answer:</h6>
+                <p class="answer-text">${data.answer}</p>
+            </div>
+            <div class="mb-3">
+                <h6 class="text-info">Justification:</h6>
+                <p class="text-muted">${data.justification}</p>
+            </div>
+            <div class="mb-3">
+                <h6 class="text-warning">Source Reference:</h6>
+                <p class="text-muted small">${data.source_reference}</p>
+            </div>
+        `;
+    } else if (data.type === 'evaluation') {
+        const scoreClass = data.evaluation.is_correct ? 'text-success' : 'text-danger';
+        resultsContent.innerHTML = `
+            <div class="mb-3">
+                <h6 class="text-muted">Question:</h6>
+                <p class="question-text">${data.question}</p>
+            </div>
+            <div class="mb-3">
+                <h6 class="text-muted">Your Answer:</h6>
+                <p class="text-muted">${data.user_answer}</p>
+            </div>
+            <div class="mb-3">
+                <h6 class="${scoreClass}">Score: ${data.evaluation.score}/100</h6>
+                <p class="text-muted">${data.evaluation.feedback}</p>
+            </div>
+            <div class="mb-3">
+                <h6 class="text-success">Correct Answer:</h6>
+                <p class="answer-text">${data.correct_answer}</p>
+            </div>
+            <div class="mb-3">
+                <h6 class="text-info">Justification:</h6>
+                <p class="text-muted">${data.justification}</p>
+            </div>
+            <div class="mb-3">
+                <h6 class="text-warning">Source Reference:</h6>
+                <p class="text-muted small">${data.source_reference}</p>
+            </div>
+        `;
+    }
+    
+    resultsSection.style.display = 'block';
+    resultsSection.scrollIntoView({ behavior: 'smooth' });
+}
+
+// Load question history
+function loadQuestionHistory() {
+    fetch(`/api/document/${documentId}/history`)
+        .then(response => response.json())
+        .then(questions => {
+            const historyContent = document.getElementById('historyContent');
+            
+            if (questions.length === 0) {
+                historyContent.innerHTML = `
+                    <div class="text-center text-muted">
+                        <i class="fas fa-clock fa-2x mb-2"></i>
+                        <p>No questions asked yet</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            historyContent.innerHTML = questions.map(q => `
+                <div class="card mb-2">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <small class="text-muted">${new Date(q.created_date).toLocaleString()}</small>
+                            <span class="badge bg-${q.type === 'user' ? 'info' : 'success'}">${q.type === 'user' ? 'Q&A' : 'Challenge'}</span>
+                        </div>
+                        <h6 class="question-text">${q.question}</h6>
+                        <p class="answer-text text-muted">${q.answer}</p>
+                        ${q.justification ? `<small class="text-muted"><strong>Justification:</strong> ${q.justification}</small>` : ''}
+                    </div>
+                </div>
+            `).join('');
+        })
+        .catch(error => {
+            console.error('Error loading history:', error);
+        });
+}
+
+// Enter key support for question input
+document.getElementById('questionInput').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        askQuestion();
+    }
+});
+</script>
+{% endblock %}
