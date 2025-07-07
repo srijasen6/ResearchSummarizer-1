@@ -2,6 +2,9 @@
 
 A Flask-based AI research assistant that provides comprehensive document analysis, summarization, and intelligent Q&A capabilities using local CPU-friendly models.
 
+
+![Demo Animation](animation.gif)
+
 ## Features
 
 - **Document Upload**: Support for PDF and TXT files (up to 16MB)
@@ -32,6 +35,10 @@ A Flask-based AI research assistant that provides comprehensive document analysi
 ### AI Models
 - **Quantized Llama**: GGUF format for CPU inference
 - **Sentence Transformers**: Lightweight embeddings model
+
+### Project structure  
+
+
 
 ## Quick Start
 
