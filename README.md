@@ -64,5 +64,8 @@ python main.py
 # 6. Open browser to http://localhost:5000
 ```
 
+![image](https://github.com/user-attachments/assets/f16dfe6f-00c3-4015-be60-9fb3a93fa551)
+
+
 ### Detailed Setup
 See [setup_guide.md](setup_guide.md) for complete step-by-step instructions.
